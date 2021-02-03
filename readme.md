@@ -1,7 +1,7 @@
 # 技能图鉴
 
 [![Release](https://img.shields.io/badge/Release-1.0-brightgreen.svg)](https://github.com/nguaduot/yys-cbg-skill)
-[![Download](https://img.shields.io/badge/Download-EXE-brightgreen.svg)](dist/1.0.exe)
+[![Download](https://img.shields.io/badge/Download-EXE-brightgreen.svg)](dist/%E6%8A%80%E8%83%BD%E5%9B%BE%E9%89%B41.0.exe)
 
 [阴阳师藏宝阁](https://yys.cbg.163.com/)衍生小工具，用于生成商品号的式神图鉴&技能速览图。
 
@@ -55,5 +55,5 @@ python cbg_skill.py -h
 
 ### 更新日志
 
-v1.0.200817
+v1.0.210204
 + 第一版发布
