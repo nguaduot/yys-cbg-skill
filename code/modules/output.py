@@ -20,9 +20,10 @@ from modules import util
 class Output(object):
     def __init__(self):
         self.__font_size = 16  # 主文本字体大小
-        self.__font_size_2 = 14  # 次文本字体大小
+        self.__font_size_title = 28  # 标题字体大小
+        self.__font_size_foot = 14  # 页脚字体大小
         self.__margin = (24, 24, 24, 24)  # 页边距
-        self.__margin_head = 20  # 页眉-正文间距
+        self.__margin_title = 30  # 标题-正文间距
         self.__margin_foot = 20  # 正文-页脚间距
         self.__margin_line = 4  # 行距
         self.__margin_paragraph = 10  # 段距
@@ -79,8 +80,9 @@ class Output(object):
                 height += height_line
         return max(width_lines), height
     
-    def _size_canvas(self, font, font_2, content, head, foot):
-        height_line_2 = sum(font_2.getmetrics())
+    def _size_canvas(self, font, font_title, font_foot, content, title, feet):
+        height_line_title = sum(font_title.getmetrics())
+        height_line_foot = sum(font_foot.getmetrics())
         
         width_main = 0
         height_main = 0
@@ -90,33 +92,45 @@ class Output(object):
                 width_main += self.__margin_column
             width_main += self.__margin_tag + size_column[0]
             height_main = max(height_main, size_column[1])
-        if head:
-            width_main = max(width_main,
-                             self.__margin_tag + font_2.getsize(head)[0])
-            height_main += height_line_2 + self.__margin_head
-        if foot:
-            width_main = max(width_main,
-                             self.__margin_tag + font_2.getsize(foot)[0])
-            height_main += self.__margin_foot + height_line_2
+        if title:
+            width_main = max(
+                width_main,
+                self.__margin_tag * 2 + font_title.getsize(title)[0]
+            )
+            height_main += height_line_title + self.__margin_title
+        if feet:
+            height_main += self.__margin_foot
+            for line in feet:
+                width_main = max(width_main,
+                                 self.__margin_tag + font_foot.getsize(line)[0])
+                height_main += height_line_foot + self.__margin_line
+            height_main -= self.__margin_line
         return (width_main + self.__margin[0] + self.__margin[2],
                 height_main + self.__margin[1] + self.__margin[3])
 
-    def text2img(self, file_font, file_out, content, head=None, foot=None):
-        font = ImageFont.truetype(file_font, size=self.__font_size)  # 主文本字体
-        font_2 = ImageFont.truetype(file_font, size=self.__font_size_2)  # 次文本字体
-        size_img = self._size_canvas(font, font_2, content, head, foot)  # 预计算图片大小
+    def text2img(self, file_font, file_out, content, title, feet):
+        font = ImageFont.truetype(
+            file_font, size=self.__font_size
+        )  # 主文本字体
+        font_title = ImageFont.truetype(
+            file_font, size=self.__font_size_title
+        )  # 标题字体
+        font_foot = ImageFont.truetype(
+            file_font, size=self.__font_size_foot
+        )  # 页脚字体
+        size_img = self._size_canvas(
+            font, font_title, font_foot, content, title, feet
+        )  # 预计算图片大小
         image = Image.new('RGB', size_img, self.__color_bg)
         draw = ImageDraw.Draw(image)
         # 放弃通过 font.getsize('xx')[1] 计算行高
         height_line = sum(font.getmetrics())  # 主文本行高
-        height_line_2 = sum(font_2.getmetrics())  # 次文本行高
-        index_column_line = [[self.__margin[0] + self.__margin_tag,
-                              self.__margin[1]]]  # 下一行索引
-        index_paragraphs = []  # 段索引
-        if head:  # 绘制页眉
-            draw.text(index_column_line[0], head,
-                      fill=self.__color_fg_2, font=font_2)
-            index_column_line[0][1] += height_line_2 + self.__margin_head
+        height_line_title = sum(font_title.getmetrics())  # 标题行高
+        height_line_foot = sum(font_foot.getmetrics())  # 页脚行高
+        index_column_line = [[
+            self.__margin[0] + self.__margin_tag,
+            self.__margin[1] + height_line_title + self.__margin_title
+        ]]  # 下一行索引
         for column in content:
             size_column = self._size_column(font, column)
             index_column_line.append([
@@ -124,6 +138,7 @@ class Output(object):
                 + self.__margin_column + self.__margin_tag,
                 index_column_line[0][1]
             ])
+        index_paragraphs = []  # 段索引
         for i, column in enumerate(content):
             index_line = index_column_line[i]
             for j, paragraph in enumerate(column):
@@ -142,13 +157,20 @@ class Output(object):
                 index_paragraphs.append({
                     'index': index_paragraph, 'level': tag_level
                 })
-        if foot:  # 绘制页脚
-            index_line = [index_column_line[0][0],
+        if title:  # 绘制标题
+            index_title = ((size_img[0] - font_title.getsize(title)[0]) / 2,
+                           self.__margin[1])
+            draw.text(index_title, title,
+                      fill=self.__color_fg, font=font_title)
+        if feet:  # 绘制页脚
+            index_line = [self.__margin[0] + self.__margin_tag,
                           max([index[1] for index in index_column_line])]
             index_line[1] -= self.__margin_line
             index_line[1] += self.__margin_foot
-            draw.text(index_line, foot, fill=self.__color_fg_2, font=font_2)
-            index_line[1] += height_line_2 + self.__margin_line
+            for line in feet:
+                draw.text(index_line, line, fill=self.__color_fg_2,
+                          font=font_foot)
+                index_line[1] += height_line_foot + self.__margin_line
         # self._draw_mark_margin(draw, MARGIN, size_img)
         self._draw_mark_paragraph(draw, index_paragraphs)
         image.save(file_out, 'png')
@@ -224,9 +246,10 @@ def enabled():
     return util.font_ok()
 
 
-def text2img(file_out, data, head=None, foot=None):
+def text2img(file_out, data, title=None, feet=None):
     o = Output()
-    o.text2img(util.font(), file_out, _data2text(data), head, foot)
+    o.text2img(util.font(), file_out, _data2text(data),
+               title, feet if feet else [])
 
 
 if __name__ == '__main__':

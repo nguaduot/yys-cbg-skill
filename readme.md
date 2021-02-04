@@ -1,7 +1,7 @@
-# 技能图鉴
+# 藏宝阁·阴阳师·技能图鉴
 
-[![Release](https://img.shields.io/badge/Release-1.0-brightgreen.svg)](https://github.com/nguaduot/yys-cbg-skill)
-[![Download](https://img.shields.io/badge/Download-EXE-brightgreen.svg)](dist/%E6%8A%80%E8%83%BD%E5%9B%BE%E9%89%B41.0.exe)
+[![Release](https://img.shields.io/badge/Release-1.0-brightgreen.svg?style=flat-square)](https://github.com/nguaduot/yys-cbg-skill)
+[![Download](https://img.shields.io/badge/Download-EXE-brightgreen.svg?style=flat-square)](dist/%E6%8A%80%E8%83%BD%E5%9B%BE%E9%89%B41.0.exe)
 
 [阴阳师藏宝阁](https://yys.cbg.163.com/)衍生小工具，用于生成商品号的式神图鉴&技能速览图。
 
@@ -10,7 +10,7 @@
 + **SP**、**SSR** 阶稀有度式神未拥有标记（红色）
 + 式神技能等级
 + 多号机情况
-+ 黑蛋拥有量+推测已消耗量
++ SP&SSR技能升级次数统计
 
 例：
 
@@ -55,5 +55,5 @@ python cbg_skill.py -h
 
 ### 更新日志
 
-v1.0.210204
+v1.0.210205
 + 第一版发布
