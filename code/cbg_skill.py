@@ -1,8 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 #
-# 技能图鉴
-# 一图速览式神图鉴&技能
+# 藏宝阁·阴阳师·技能图鉴：一图速览式神图鉴&技能
 #
 # 了解更多请前往 GitHub 查看项目：https://github.com/nguaduot/yys-cbg-skill
 #
@@ -456,7 +455,7 @@ def main():
         print(COPYRIGHT)
     else:
         print(COPYRIGHT)
-        url_equip = input('藏宝阁链接: ')
+        url_equip = input(log('藏宝阁链接: ', 'input'))
 
     # 抓取数据(多线程)
     thread_fetch_config = Thread(target=fetch_config)
@@ -470,7 +469,7 @@ def main():
     
     # 计算SP&SSR技能加点
     damo_yx_cost = get_damo_yx_cost(DATA_SOURCE_EQUIP)
-    print(log('SP&SSR技能加点: %d' % damo_yx_cost, 'info'))
+    print('SP&SSR技能加点: %d' % damo_yx_cost)
 
     # 提取式神图鉴
     data_hero_book = get_hero_book(DATA_SOURCE_CONFIG)

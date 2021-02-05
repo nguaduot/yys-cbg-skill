@@ -3,14 +3,14 @@
 [![Release](https://img.shields.io/badge/Release-1.0-brightgreen.svg?style=flat-square)](https://github.com/nguaduot/yys-cbg-skill)
 [![Download](https://img.shields.io/badge/Download-EXE-brightgreen.svg?style=flat-square)](dist/%E6%8A%80%E8%83%BD%E5%9B%BE%E9%89%B41.0.exe)
 
-[阴阳师藏宝阁](https://yys.cbg.163.com/)衍生小工具，用于生成商品号的式神图鉴&技能速览图。
+[阴阳师藏宝阁](https://yys.cbg.163.com/)衍生小工具，一图速览商品号式神图鉴&技能。
 
 一图包含了哪些信息？
-+ **联动** & **SP** & **SSR** & **SR** & **R** 五类式神完整图鉴
-+ **SP**、**SSR** 阶稀有度式神未拥有标记（红色）
-+ 式神技能等级
-+ 多号机情况
-+ SP&SSR技能升级次数统计
++ **联动**、**SP**、**SSR**、**SR**、**R** 式神图鉴
++ 式神录可见全式神技能等级
++ 高亮标记 **SP**、**SSR** 缺失式神（已收录仍可能缺失）
++ 高亮标记满技能式神
++ **SP**、**SSR** 技能升级次数统计
 
 例：
 
