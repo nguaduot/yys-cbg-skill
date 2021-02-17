@@ -6,8 +6,8 @@
 # 了解更多请前往 GitHub 查看项目：https://github.com/nguaduot/yys-cbg-skill
 #
 # author: @nguaduot 痒痒鼠@南瓜多糖
-# version: 1.0.210205
-# date: 20210205
+# version: 1.1.210217
+# date: 20210217
 
 import datetime
 import getopt
@@ -26,8 +26,8 @@ from modules import output
 
 PROG = 'yys-cbg-skill'
 AUTH = 'nguaduot'
-VER = '1.0'
-VERSION = '1.0.210205'
+VER = '1.1'
+VERSION = '1.1.210217'
 REL = 'github.com/nguaduot/yys-cbg-skill'
 COPYRIGHT = '%s v%s @%s %s' % (PROG, VERSION, AUTH, REL)
 HELP = '''+ 选项：
@@ -39,6 +39,7 @@ HELP = '''+ 选项：
 
 HERO_RARITY = {5: 'sp', 4: 'ssr', 3: 'sr', 2: 'r', 1: 'n'}  # 式神稀有度索引
 RARITY_SHOWN = ['x', 'sp', 'ssr', 'sr', 'r']  # 设定显示的稀有度，其他则不显示(X为联动)
+RARITY_FRAGMENT = {5: 60, 4: 50, 3: 40, 2: 30, 1: 25}  # 各稀有度碎片合成量
 HERO_ONMYOJI = {
     10: '晴明', 11: '神乐', 13: '源博雅', 12: '八百比丘尼',
     900: '神龙', 901: '白藏主', 903: '黑豹', 902: '孔雀'
@@ -281,6 +282,23 @@ def save(data_equip, data_hero_book, damo_yx_cost):
                   % file_result.rsplit('_', 1)[1], 'warn'))
 
 
+def get_hero_book(data_config):
+    result = {}
+    for item in data_config['hero_list']:
+        # [200, '桃花妖', 3, 'taohuayao']
+        # 200: 式神 ID
+        # 3: 稀有度索引(5 SP 4 SSR 3 SR 2 R 1 N + 呱 + 素材)
+        result[item[1]] = {
+            'rarity': item[2],
+            'fragment': None,
+            'sort': item[0],
+            'x': False,
+            'max': None,
+            'all': []
+        }
+    return result
+
+
 def get_damo_yx_cost(data_equip):
     data_game = json.loads(data_equip['equip']['equip_desc'])
     # data_damo = data_game['damo_count_dict']
@@ -296,20 +314,11 @@ def get_damo_yx_cost(data_equip):
     return sum_cost
 
 
-def get_hero_book(data_config):
-    result = {}
-    for item in data_config['hero_list']:
-        # [200, '桃花妖', 3, 'taohuayao']
-        # 200: 式神 ID
-        # 3: 稀有度索引(5 SP 4 SSR 3 SR 2 R 1 N + 呱 + 素材)
-        result[item[1]] = {
-            'rarity': item[2],
-            'sort': item[0],
-            'x': False,
-            'max': None,
-            'all': []
-        }
-    return result
+def get_hero_fragment(data_equip):
+    # 仅 SP、SSR 有数据
+    data_game = json.loads(data_equip['equip']['equip_desc'])
+    return {item['name']: item['num']
+            for item in data_game['hero_fragment'].values()}
 
 
 def get_hero_x(data_equip):
@@ -488,8 +497,18 @@ def main():
     for name, item in data_hero_book.items():
         if name in data_hero_own:
             item['all'] = data_hero_own[name]['all']
-        else:  # 式神未拥有置 None，未知置空
+        else:  # 式神缺失置 None，未知置空
             item['all'] = None if item['rarity'] >= 4 else []
+
+    # 加入碎片存量
+    data_fragment = get_hero_fragment(DATA_SOURCE_EQUIP)
+    for name, item in data_hero_book.items():
+        item['fragment'] = {
+            'own': data_fragment.get(
+                name, 0 if item['rarity'] >= 4 else None
+            ),
+            'max': RARITY_FRAGMENT[item['rarity']]
+        }
     
     # 稀有度过滤
     data_hero_book2 = {}

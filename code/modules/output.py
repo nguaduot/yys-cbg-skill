@@ -178,12 +178,12 @@ class Output(object):
 
 
 def _level_tag(line):
-    obj = re.match(r'^.+ (.+?)(?:/(.+))?$', line)
+    obj = re.match(r'^.+ (\d{3}|[\-\?])(?:/(\d{3}))?$', line)
     if not obj:
         return 'normal'
-    if obj.group(1) == '???':  # 未知
+    if obj.group(1) == '?':  # 未知
         return 'heroUnknown'
-    if obj.group(1) == '---':  # 式神未拥有
+    if obj.group(1) == '-':  # 式神缺失
         return 'heroLost'
     if obj.group(2) and obj.group(1) == obj.group(2):  # 满技能
         return 'skillFull'
@@ -211,15 +211,23 @@ def _data2text(data):
             [item for item in data_not_x if item['rarity'] == rarity],
             key=lambda x: x['sort']
         ))
-        
+
     result = []
     for column in data_columns:
         result_columns = []
         for i, item in enumerate(column):
-            if not item['all']:
+            if item['all'] is None:  # 式神缺失
+                name = item['name']
+                if item['fragment'] and item['fragment']['own'] is not None:
+                    name += ':%d片' % item['fragment']['own']
                 result_columns.append(['%s  %s%s' % (
-                    item['name'],
-                    '---' if item['all'] is None else '???',
+                    name, '-',
+                    ('/%s' % item['max']) if item['max'] else ''
+                )])
+                continue
+            if not item['all']:  # 未知
+                result_columns.append(['%s  %s%s' % (
+                    item['name'], '?',
                     ('/%s' % item['max']) if item['max'] else ''
                 )])
                 continue
