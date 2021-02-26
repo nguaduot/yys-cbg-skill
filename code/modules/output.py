@@ -130,6 +130,7 @@ class Output(object):
         index_column_line = [[
             self.__margin[0] + self.__margin_tag,
             self.__margin[1] + height_line_title + self.__margin_title
+            if title else self.__margin[1]
         ]]  # 下一行索引
         for column in content:
             size_column = self._size_column(font, column)
