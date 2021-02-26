@@ -1,7 +1,7 @@
 # 藏宝阁·阴阳师·技能图鉴
 
-[![Release](https://img.shields.io/badge/Release-1.0-brightgreen.svg?style=flat-square)](https://github.com/nguaduot/yys-cbg-skill)
-[![Download](https://img.shields.io/badge/Download-EXE-brightgreen.svg?style=flat-square)](dist/%E6%8A%80%E8%83%BD%E5%9B%BE%E9%89%B41.0.exe)
+[![Release](https://img.shields.io/badge/Release-1.1-brightgreen.svg?style=flat-square)](https://github.com/nguaduot/yys-cbg-skill/releases)
+[![Download](https://img.shields.io/badge/Download-EXE-brightgreen.svg?style=flat-square)](dist/%E6%8A%80%E8%83%BD%E5%9B%BE%E9%89%B41.1.exe)
 
 [阴阳师藏宝阁](https://yys.cbg.163.com/)衍生小工具，一图速览商品号式神图鉴&技能。
 
@@ -10,17 +10,17 @@
 + 式神录可见全式神技能等级
 + 高亮标记 **SP**、**SSR** 缺失式神（已收录仍可能缺失）
 + 高亮标记满技能式神
-+ **SP**、**SSR** 技能升级次数统计
++ 御行达摩保有量+消耗量（保守估计）
 
 例：
 
-商品页面：[阴阳师藏宝阁-夏之蝉-南瓜多糖](https://yys.cbg.163.com/cgi/mweb/equip/21/202101152201616-21-VTG7H9VQQFVSG)
+商品页面：[阴阳师藏宝阁-夏之蝉-南瓜多糖](https://yys.cbg.163.com/cgi/mweb/equip/21/202102020901616-21-3S6GQUUH2DOUM)
 
-生成图：[技能图鉴](sample/cbg_中国区-iOS_夏之蝉_南瓜多糖_20210201095612_skill.png)
+生成图：[技能图鉴](sample/cbg_中国区-iOS_夏之蝉_南瓜多糖_20210222071008_skill.png)
 
 > 「技能图鉴」同时发布到 NGA 论坛阴阳师板块，可回复交流：
 > 
-> [[心得交流] [02/05] [v1.0] 藏宝阁·技能图鉴：一图速览式神图鉴&技能](https://nga.178.com/read.php?tid=25428203&_ff=538)
+> [[心得交流] [02/26] [v1.1] 藏宝阁·技能图鉴：一图速览式神图鉴&技能](https://nga.178.com/read.php?tid=25428203&_ff=538)
 
 ### 依赖
 
