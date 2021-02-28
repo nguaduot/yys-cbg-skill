@@ -252,7 +252,8 @@ def save(data_hero_book, title, feet, path_base):
     if output.enabled():
         feet_all = feet + (path.basename(file_result), COPYRIGHT)
         output.text2img(file_result, data_hero_book,
-                        title=title, feet=feet_all)
+                        title=title, feet=feet_all,
+                        palette=output.PaletteDay())
         print(log('已保存结果 \'*_%s\'' % file_result.rsplit('_', 1)[1], 'info'))
         view(file_result)
     else:

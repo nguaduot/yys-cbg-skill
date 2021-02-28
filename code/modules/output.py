@@ -17,8 +17,27 @@ except ModuleNotFoundError:
 from modules import util
 
 
+class Palette(object):
+    bg = '#ffffff'  # 背景色
+    txt = ('#000000', '#000000')  # 文本色
+    tag = ('#000000', '#000000', '#000000')  # 标签色(好, 中, 差)
+
+
+class PaletteDay(Palette):
+    bg = '#ffffff'
+    txt = ('#000000', '#555555')
+    tag = ('#0000ee', '#555555', '#cd0000')
+
+
+class PaletteNight(Palette):
+    bg = '#2b2b2b'
+    txt = ('#bbbbbb', '#555555')
+    tag = ('#5394ec', '#555555', '#cc666e')
+
+
 class Output(object):
-    def __init__(self):
+    def __init__(self, palette: Palette):
+        self.__palette = palette  # 色彩管理
         self.__font_size = 16  # 主文本字体大小
         self.__font_size_title = 28  # 标题字体大小
         self.__font_size_foot = 14  # 页脚字体大小
@@ -30,41 +49,18 @@ class Output(object):
         self.__margin_column = 80  # 列距
         self.__margin_tag = 16  # 标签色块占距
         self.__unit = 4
-        self.__color_bg = '#2b2b2b'  # 背景色
-        self.__color_fg = '#bbbbbb'  # 前景色（文本颜色）
-        self.__color_fg_2 = '#555555'  # 次前景色
-        self.__color_tags = {
-            'skillFull': '#5394ec',
-            'heroLost': '#cc666e',
-            'heroUnknown': self.__color_fg,
-            'normal': self.__color_fg_2
-        }  # 各级色块标签
-
-    def _draw_mark_margin(self, draw, margin, size_page):
-        index_end = (size_page[0] - 1, size_page[1] - 1)
-        index_rectangles = (
-            (0, 0, margin[0] - 1, self.__unit - 1),
-            (0, 0, self.__unit - 1, margin[1] - 1),
-            (index_end[0] - margin[2] + 1, 0, index_end[0], self.__unit - 1),
-            (index_end[0] - self.__unit + 1, 0, index_end[0], margin[1] - 1),
-            (index_end[0] - margin[2] + 1, index_end[1] - self.__unit + 1,
-             index_end[0], index_end[1]),
-            (index_end[0] - self.__unit + 1, index_end[1] - margin[3] + 1,
-             index_end[0], index_end[1]),
-            (0, index_end[1] - self.__unit + 1, margin[0] - 1, index_end[1]),
-            (0, index_end[1] - margin[3] + 1, self.__unit - 1, index_end[1])
-        )
-        for index in index_rectangles:
-            draw.rectangle(index, fill=self.__color_fg_2)
 
     def _draw_mark_paragraph(self, draw, index_paragraphs):
         offset = 14
         for paragraph in index_paragraphs:
-            index = paragraph['index']
-            color_tag = self.__color_tags[paragraph['level']]
-            draw.rectangle((index[0] - offset, index[1],
-                            index[2] - offset + self.__unit - 1, index[3]),
-                           fill=color_tag)
+            tag_index = paragraph['index']
+            tag_level = paragraph['level']
+            if not 0 <= tag_level < len(self.__palette.tag):
+                continue
+            draw.rectangle((
+                tag_index[0] - offset, tag_index[1],
+                tag_index[2] - offset + self.__unit - 1, tag_index[3]
+            ), fill=self.__palette.tag[tag_level])
 
     def _size_column(self, font, content):
         height_line = sum(font.getmetrics())
@@ -121,7 +117,7 @@ class Output(object):
         size_img = self._size_canvas(
             font, font_title, font_foot, content, title, feet
         )  # 预计算图片大小
-        image = Image.new('RGB', size_img, self.__color_bg)
+        image = Image.new('RGB', size_img, self.__palette.bg)
         draw = ImageDraw.Draw(image)
         # 放弃通过 font.getsize('xx')[1] 计算行高
         height_line = sum(font.getmetrics())  # 主文本行高
@@ -148,11 +144,12 @@ class Output(object):
                     index_line[1] += self.__margin_paragraph
                 index_paragraph = [index_line[0], index_line[1],
                                    index_line[0], 0]
-                tag_level = 'normal'
+                tag_level = 1
                 for k, line in enumerate(paragraph):
                     if k == 0:
                         tag_level = _level_tag(line)
-                    draw.text(index_line, line, fill=self.__color_fg, font=font)
+                    draw.text(index_line, line,
+                              fill=self.__palette.txt[0], font=font)
                     index_line[1] += height_line + self.__margin_line
                 index_paragraph[3] = index_line[1] - self.__margin_line - 1
                 index_paragraphs.append({
@@ -162,17 +159,16 @@ class Output(object):
             index_title = ((size_img[0] - font_title.getsize(title)[0]) / 2,
                            self.__margin[1])
             draw.text(index_title, title,
-                      fill=self.__color_fg, font=font_title)
+                      fill=self.__palette.txt[0], font=font_title)
         if feet:  # 绘制页脚
             index_line = [self.__margin[0] + self.__margin_tag,
                           max([index[1] for index in index_column_line])]
             index_line[1] -= self.__margin_line
             index_line[1] += self.__margin_foot
             for line in feet:
-                draw.text(index_line, line, fill=self.__color_fg_2,
+                draw.text(index_line, line, fill=self.__palette.txt[1],
                           font=font_foot)
                 index_line[1] += height_line_foot + self.__margin_line
-        # self._draw_mark_margin(draw, MARGIN, size_img)
         self._draw_mark_paragraph(draw, index_paragraphs)
         image.save(file_out, 'png')
         # image.show()  # 会导致主进程挂起
@@ -180,15 +176,15 @@ class Output(object):
 
 def _level_tag(line):
     obj = re.match(r'^.+ (\d{1,3}|[\-\?])(?:/(\d{1,3}))?$', line)
-    if not obj:
-        return 'normal'
+    if not obj:  # 异常
+        return -1
     if obj.group(1) == '?':  # 未知
-        return 'heroUnknown'
+        return 1
     if obj.group(1) == '-':  # 式神缺失
-        return 'heroLost'
+        return 2
     if obj.group(2) and obj.group(1) == obj.group(2):  # 满技能
-        return 'skillFull'
-    return 'normal'
+        return 0
+    return 1
 
 
 def _fix_skill(skill: str, skill_max: str):
@@ -278,10 +274,11 @@ def enabled():
     return util.font_ok()
 
 
-def text2img(file_out, data, title=None, feet=None):
-    o = Output()
+def text2img(file_out, data, title: str = None, feet: tuple = None,
+             palette: Palette = None):
+    o = Output(palette if palette else PaletteNight())
     o.text2img(util.font(), file_out, _data2text(data),
-               title, feet if feet else [])
+               title, feet if feet else ())
 
 
 if __name__ == '__main__':

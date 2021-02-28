@@ -95,7 +95,7 @@ class CbgParser(Parser):
         rarity_readable = {'x': '联动', 'sp': 'SP', 'ssr': 'SSR', 'sr': 'SR',
                            'r': 'R', 'gua': '呱'}
         data_history = self.data_equip['hero_history']
-        result = '式神图鉴:'
+        result = '图鉴收录:'
         for key, name in rarity_readable.items():
             if key in rarity_target and key in data_history:
                 result += ' %s %d/%d' % (
