@@ -1,15 +1,14 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 #
-# 藏宝阁·阴阳师·技能图鉴：一图速览式神图鉴&技能
+# 阴阳师·技能图鉴：一图速览式神图鉴&技能
 #
 # 了解更多请前往 GitHub 查看项目：https://github.com/nguaduot/yys-cbg-skill
 #
 # author: @nguaduot 痒痒鼠@南瓜多糖
-# version: 1.1.210226
-# date: 20210226
+# version: 2.0.210228
+# date: 20210228
 
-import datetime
 import getopt
 import json
 import os
@@ -23,11 +22,12 @@ from urllib import request
 from urllib import parse
 
 from modules import output
+from modules import parser
 
 PROG = 'yys-cbg-skill'
 AUTH = 'nguaduot'
-VER = '1.1'
-VERSION = '1.1.210226'
+VER = '2.0'
+VERSION = VER + '.210228'
 REL = 'github.com/nguaduot/yys-cbg-skill'
 COPYRIGHT = '%s v%s @%s %s' % (PROG, VERSION, AUTH, REL)
 HELP = '''+ 选项：
@@ -37,13 +37,16 @@ HELP = '''+ 选项：
 + 若未指定 -u, 程序会读取未知参数, 若也无未知参数, 不启动程序'
 + 不带任何参数也可启动程序, 会有参数输入引导'''
 
-HERO_RARITY = {5: 'sp', 4: 'ssr', 3: 'sr', 2: 'r', 1: 'n'}  # 式神稀有度索引
-RARITY_SHOWN = ['x', 'sp', 'ssr', 'sr', 'r']  # 设定显示的稀有度，其他则不显示(X为联动)
-RARITY_FRAGMENT = {5: 60, 4: 50, 3: 40, 2: 30, 1: 25}  # 各稀有度碎片合成量
-HERO_ONMYOJI = {
-    10: '晴明', 11: '神乐', 13: '源博雅', 12: '八百比丘尼',
-    900: '神龙', 901: '白藏主', 903: '黑豹', 902: '孔雀'
-}  # 阴阳师及其御灵稀有度均被设定为SSR, 即 item['rarity'] == 4
+HERO_N_FAKE = {
+    410: '招福达摩',
+    411: '御行达摩',
+    412: '奉为达摩',
+    413: '大吉达摩',
+    499: '鬼武达摩'
+}  # 被归为 N 阶稀有度的素材
+
+# TODO: 可自行调整
+RARITY_VISIBLE = ['x', 'sp', 'ssr', 'sr', 'r']  # 设定显示的稀有度, 其他则不显示(X为联动)
 
 # TODO: 以下常量需留意随版本更新而检查更新
 HERO_SKILL_MAX = {
@@ -204,77 +207,52 @@ HERO_SKILL_MAX = {
     '虫师': '515',
     '天井下': '555',
     '垢尝': '515',
-    # N卡 (藏宝阁数据不会包含该稀有度式神，无论星级)
+    # N卡
     '灯笼鬼': '534',
-    '提灯小僧': '515',
+    '提灯小僧': '55',
     '赤舌': '555',
-    '盗墓小鬼': '511',
-    '寄生魂': '511',
-    '唐纸伞妖': '515',
-    '天邪鬼绿': '515',
-    '天邪鬼赤': '511',
-    '天邪鬼黄': '511',
-    '天邪鬼青': '511',
-    '帚神': '515',
-    '涂壁': '511',
-    # 呱 (藏宝阁数据不会包含该稀有度式神，无论星级)
-    '大天狗呱': '515',
-    '酒吞呱': '515',
-    '荒川呱': '515',
-    '阎魔呱': '515',
-    '两面佛呱': '515',
-    '小鹿男呱': '515',
-    '茨木呱': '515',
-    '青行灯呱': '515',
-    '妖刀姬呱': '515',
-    '一目连呱': '515',
-    '花鸟卷呱': '515',
-    '辉夜姬呱': '515',
-    '荒呱': '515',
-    '彼岸花呱': '515'
+    '盗墓小鬼': '5',
+    '寄生魂': '5',
+    '唐纸伞妖': '55',
+    '天邪鬼绿': '55',
+    '天邪鬼赤': '51',
+    '天邪鬼黄': '51',
+    '天邪鬼青': '51',
+    '帚神': '55',
+    '涂壁': '51',
+    # 呱
+    '大天狗呱': '55',
+    '酒吞呱': '55',
+    '荒川呱': '55',
+    '阎魔呱': '55',
+    '两面佛呱': '55',
+    '小鹿男呱': '55',
+    '茨木呱': '55',
+    '青行灯呱': '55',
+    '妖刀姬呱': '55',
+    '一目连呱': '55',
+    '花鸟卷呱': '55',
+    '辉夜姬呱': '55',
+    '荒呱': '55',
+    '彼岸花呱': '55'
 }  # 式神技能等级上限, 使用 HERO_SKILL_MAX.get(x, x) 取值而非 HERO_SKILL_MAX[x]
 
 USER_AGENT = ('Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
               ' AppleWebKit/537.36 (KHTML, like Gecko)'
               ' Chrome/84.0.4147.89 Safari/537.36')
 
-DATA_SOURCE_CONFIG = None
-DATA_SOURCE_EQUIP = None
+data_src_config: dict = None
+data_parser: parser.Parser = None
 
 
-def save(data_equip, data_hero_book, num_damo_yx):
-    dir_cbg = path.join(path.dirname(path.abspath(sys.argv[0])), 'cbg')
-    if not path.isdir(dir_cbg):
-        os.mkdir(dir_cbg)
-    if not data_equip:
-        return
-    # 删除 Windows 文件名中不允许出现的字符, 以及无法正常显示且会导致 IO 异常的控制字符
-    # 使用当前卖家角色昵称 equip_name，而非 seller_name，其会随买家再次上架而改变
-    seller = data_equip['equip']['equip_name']
-    seller2 = re.sub(
-        r'[\\/:?"<>|\u0000-\u001F\u007F-\u009F]', '',
-        data_equip['equip']['equip_name']
-    )
-    t = datetime.datetime.strptime(data_equip['equip']['create_time'],
-                                   '%Y-%m-%d %H:%M:%S')
-    file_base = path.join(dir_cbg, 'cbg_%s_%s_%s_%s' % (
-        data_equip['equip']['area_name'], data_equip['equip']['server_name'],
-        seller2, t.strftime('%Y%m%d%H%M%S')
-    ))
-    file_source = '%s.json' % file_base
-    file_result = '%s_skill.png' % file_base
-    # if path.isfile(file_source):
-    #     cio('源数据已存在 \'%s\'' % path.basename(file_source), 'info')
-    with open(file_source, 'w', encoding='utf-8') as f:
-        json.dump(data_equip, f)
-    print(log('已保存源数据 \'%s\'' % path.basename(file_source), 'info'))
+def save(data_hero_book, title, feet, path_base):
+    for foot in feet:
+        print(foot)
+    file_result = '%s_skill.png' % path_base
     if output.enabled():
-        title = '藏宝阁·阴阳师·技能图鉴: @%s' % seller
-        feet = ('御行达摩保有/消耗量: %d+/%d+' % num_damo_yx,
-                path.basename(file_result),
-                COPYRIGHT)
+        feet_all = feet + (path.basename(file_result), COPYRIGHT)
         output.text2img(file_result, data_hero_book,
-                        title=title, feet=feet)
+                        title=title, feet=feet_all)
         print(log('已保存结果 \'*_%s\'' % file_result.rsplit('_', 1)[1], 'info'))
         view(file_result)
     else:
@@ -282,85 +260,27 @@ def save(data_equip, data_hero_book, num_damo_yx):
                   % file_result.rsplit('_', 1)[1], 'warn'))
 
 
-def get_hero_book(data_config):
+def get_hero_book(data_config: dict):
     result = {}
     for item in data_config['hero_list']:
         # [200, '桃花妖', 3, 'taohuayao']
         # 200: 式神 ID
         # 3: 稀有度索引(5 SP 4 SSR 3 SR 2 R 1 N + 呱 + 素材)
+        if item[0] in HERO_N_FAKE:
+            continue
         result[item[1]] = {
             'rarity': item[2],
             'fragment': None,
             'sort': item[0],
             'x': False,
-            'max': None,
+            'max': HERO_SKILL_MAX.get(item[1], None),
             'all': []
         }
     return result
 
 
-def get_damo_yx(data_equip):
-    """获取黑蛋保有量+消耗量
-
-    注: 两者均为保守估计，前者未包含碎片合成量，后者无法统计到浪费在非SP/SSR的量
-
-    Args:
-        data_equip (dict): 源数据
-
-    Returns:
-        tuple: 黑蛋保有量+消耗量
-    """
-    data_game = json.loads(data_equip['equip']['equip_desc'])
-    data_damo = data_game['damo_count_dict']
-    data_heroes = list(data_game['heroes'].values())
-    data_sp_ssr = [item for item in data_heroes if (
-        item['rarity'] == 5 or item['rarity'] == 4
-    ) and item['heroId'] not in HERO_ONMYOJI]
-    sum_own = sum([num for damoes in data_damo.values()
-                   for damo, num in damoes.items()
-                   if damo == '411'])
-    sum_cost = sum([max(info[1] - 1, 0) for hero in data_sp_ssr
-                    for info in hero['skinfo']])
-    return sum_own, sum_cost
-
-
-def get_hero_fragment(data_equip):
-    # 仅 SP、SSR 有数据
-    data_game = json.loads(data_equip['equip']['equip_desc'])
-    return {item['name']: item['num']
-            for item in data_game['hero_fragment'].values()}
-
-
-def get_hero_x(data_equip):
-    data_game = json.loads(data_equip['equip']['equip_desc'])
-    return [item[0] for item in data_game['hero_history']['x'].values()
-            if type(item) is list]
-
-
-def get_hero_own(data_equip):
-    data_game = json.loads(data_equip['equip']['equip_desc'])
-    data_heroes = [item for item in data_game['heroes'].values()
-                   if item['heroId'] not in HERO_ONMYOJI]
-
-    result = {}
-    for item in data_heroes:
-        skills = sorted(item['skinfo'], key=lambda x: x[0])
-        skills = ''.join([str(max(one[1], 1)) for one in skills])
-        if item['name'] in result:
-            result[item['name']]['all'].append(skills)
-        else:
-            result[item['name']] = {
-                'rarity': item['rarity'],
-                'sort': item['heroId'],
-                'x': False,
-                'max': None,
-                'all': [skills]
-            }
-    return result
-
-
-def fetch_config():
-    global DATA_SOURCE_CONFIG
+def fetch_cbg_config():
+    global data_src_config
     print(log('正在读取式神图鉴数据...', 'info'))
     url_heroes = 'https://cbg-yys.res.netease.com/js/game_auto_config.js'
     req = request.Request(url=url_heroes, headers={
@@ -370,11 +290,11 @@ def fetch_config():
     r = re.search(r'({.+})', data)
     if not r:
         return
-    DATA_SOURCE_CONFIG = json.loads(r.group(1))
+    data_src_config = json.loads(r.group(1))
 
 
-def fetch_equip(url_equip):
-    global DATA_SOURCE_EQUIP
+def fetch_cbg_equip(url_equip):
+    global data_parser
     url_player = urllib.parse.unquote(url_equip, encoding='utf-8')
     parsed = urllib.parse.urlparse(url_player)
     # queries = urllib.parse.parse_qs(parsed.query)  # 参数可省略
@@ -398,7 +318,51 @@ def fetch_equip(url_equip):
         method='POST'
     )
     result = request.urlopen(req, timeout=8).read().decode('utf-8')
-    DATA_SOURCE_EQUIP = json.loads(result)
+    data_src = json.loads(result)
+    data_parser = parser.CbgParser(sys.argv[0], data_src, RARITY_VISIBLE)
+    # 保存源文件
+    file_src = '%s.json' % data_parser.generate_path_base()
+    with open(file_src, 'w', encoding='utf-8') as f:
+        json.dump(data_src, f)
+    print(log('已保存源数据 \'%s\'' % path.basename(file_src), 'info'))
+
+
+def read_data(path_data):
+    global data_parser
+    with open(path_data, 'r', encoding='utf-8') as f:
+        obj = json.loads(f.read())
+        if check_data_fluxxu(obj):  # 按「痒痒熊快照」数据处理
+            data_parser = parser.YyxParser(path_data, obj, RARITY_VISIBLE)
+        elif check_data_cbg(obj):  # 按藏宝阁数据处理
+            data_parser = parser.CbgParser(sys.argv[0], obj, RARITY_VISIBLE)
+        else:
+            print(log('无法识别数据文件内容', 'error'))
+
+
+def check_data_fluxxu(data):
+    """检查 JSON 数据是否为「痒痒熊快照」数据
+
+    Args:
+        data (dict): JSON 数据
+
+    Returns:
+        bool: 合法返回 True
+    """
+    return (data and isinstance(data, dict)
+            and 'data' in data and 'hero_equips' in data['data'])
+
+
+def check_data_cbg(data):
+    """检查 JSON 数据是否为藏宝阁数据
+
+    Args:
+        data (dict): JSON 数据
+
+    Returns:
+        bool: 合法返回 True
+    """
+    return (data and isinstance(data, dict)
+            and 'equip' in data and 'equip_desc' in data['equip'])
 
 
 def log(content, level):
@@ -468,69 +432,36 @@ def run_as_exe():
 
 def main():
     if len(sys.argv) > 1:
-        url_equip = parse_args(sys.argv[1:])
-        if not url_equip:
+        url_or_path = parse_args(sys.argv[1:])
+        if not url_or_path:
             return
         print(COPYRIGHT)
     else:
         print(COPYRIGHT)
-        url_equip = input(log('藏宝阁链接: ', 'input'))
+        url_or_path = input(log('藏宝阁链接/痒痒熊快照导出文件: ', 'input')).strip('"\'')
 
-    # 抓取数据(多线程)
-    thread_fetch_config = Thread(target=fetch_config)
-    thread_fetch_equip = Thread(target=fetch_equip, args=(url_equip,))
-    thread_fetch_config.start()
-    thread_fetch_equip.start()
-    thread_fetch_config.join()
-    thread_fetch_equip.join()
-    if not DATA_SOURCE_CONFIG or not DATA_SOURCE_EQUIP:
+    # 读取/抓取数据&解析数据
+    thread1 = Thread(target=fetch_cbg_config)
+    thread1.start()
+    if path.isfile(url_or_path):
+        thread2 = Thread(target=read_data, args=(url_or_path,))
+        thread2.start()
+    else:
+        thread2 = Thread(target=fetch_cbg_equip, args=(url_or_path,))
+        thread2.start()
+    thread1.join()
+    thread2.join()
+    if not data_src_config or not data_parser:
         return
     
-    # 获取黑蛋保有量+消耗量
-    num_damo_yx = get_damo_yx(DATA_SOURCE_EQUIP)
-    print('御行达摩保有/消耗量: %d+/%d+' % num_damo_yx)
-
-    # 提取式神图鉴
-    data_hero_book = get_hero_book(DATA_SOURCE_CONFIG)
-
-    # 识别联动式神
-    data_hero_x = get_hero_x(DATA_SOURCE_EQUIP)
-    for name, item in data_hero_book.items():
-        item['x'] = name in data_hero_x
-
-    # 加入式神技能等级上限
-    for name, item in data_hero_book.items():
-        item['max'] = HERO_SKILL_MAX.get(name, None)
-
-    # 合并式神录
-    data_hero_own = get_hero_own(DATA_SOURCE_EQUIP)
-    for name, item in data_hero_book.items():
-        if name in data_hero_own:
-            item['all'] = data_hero_own[name]['all']
-        else:  # 式神缺失置 None，未知置空
-            item['all'] = None if item['rarity'] >= 4 else []
-
-    # 加入碎片存量
-    data_fragment = get_hero_fragment(DATA_SOURCE_EQUIP)
-    for name, item in data_hero_book.items():
-        item['fragment'] = {
-            'own': data_fragment.get(
-                name, 0 if item['rarity'] >= 4 else None
-            ),
-            'max': RARITY_FRAGMENT[item['rarity']]
-        }
-    
-    # 稀有度过滤
-    data_hero_book2 = {}
-    for name, item in data_hero_book.items():
-        if item['x']:
-            if 'x' in RARITY_SHOWN:
-                data_hero_book2[name] = item
-        elif HERO_RARITY[item['rarity']] in RARITY_SHOWN:
-            data_hero_book2[name] = item
+    # 解析式神图鉴
+    data_hero_book = get_hero_book(data_src_config)
 
     # 生成结果图片
-    save(DATA_SOURCE_EQUIP, data_hero_book2, num_damo_yx)
+    save(data_parser.parse(data_hero_book),
+         data_parser.get_title(),
+         data_parser.get_feet(),
+         data_parser.generate_path_base())
 
 
 if __name__ == '__main__':

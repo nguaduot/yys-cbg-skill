@@ -179,7 +179,7 @@ class Output(object):
 
 
 def _level_tag(line):
-    obj = re.match(r'^.+ (\d{3}|[\-\?])(?:/(\d{3}))?$', line)
+    obj = re.match(r'^.+ (\d{1,3}|[\-\?])(?:/(\d{1,3}))?$', line)
     if not obj:
         return 'normal'
     if obj.group(1) == '?':  # 未知
@@ -191,8 +191,22 @@ def _level_tag(line):
     return 'normal'
 
 
-def _score_skill(skill):
+def _fix_skill(skill: str, skill_max: str):
+    if not skill_max:  # 未预设该式神满技能
+        return skill
+    if len(skill) == len(skill_max):  # 正确值, 无须修复
+        return skill
+    if len(skill) != len(skill_max) - 1:  # 非可修复的异常值
+        return skill
+    return skill[:1] + '1' + skill[1:]
+
+
+def _score_skill(skill: str):
     return sum([int(num) for num in skill])
+
+
+def _skill_basic(skill: str):
+    return skill == '1' * len(skill)
 
 
 def _data2text(data):
@@ -226,22 +240,31 @@ def _data2text(data):
                     ('/%s' % item['max']) if item['max'] else ''
                 )])
                 continue
-            if not item['all']:  # 未知
+            if not item['all']:  # [] 未知
                 result_columns.append(['%s  %s%s' % (
                     item['name'], '?',
                     ('/%s' % item['max']) if item['max'] else ''
                 )])
                 continue
-            skill_all = sorted(item['all'],
+            skill_all = []
+            for skill in item['all']:
+                skill_all.append(_fix_skill(skill, item['max']))
+            skill_all = sorted(skill_all,
                                key=lambda x: _score_skill(x),
                                reverse=True)
+            index_basic_skill = len(skill_all)
+            for j, skill in enumerate(skill_all):
+                if _skill_basic(skill):
+                    index_basic_skill = j
+                    break
             lines = ['%s  %s' % (item['name'], skill)
-                     for skill in skill_all[1:]]
-            lines.insert(0, '%s  %s%s' % (
-                item['name'],
-                skill_all[0],
-                ('/%s' % item['max']) if item['max'] else ''
-            ))
+                     for skill in skill_all[:index_basic_skill]]
+            if index_basic_skill < len(skill_all):
+                line = '%s  %s' % (item['name'], skill_all[index_basic_skill])
+                if index_basic_skill < len(skill_all) - 1:
+                    line = '%dx' % (len(skill_all) - index_basic_skill) + line
+                lines.append(line)
+            lines[0] += ('/%s' % item['max']) if item['max'] else ''
             result_columns.append(lines)
         result.append(result_columns)
     return result
