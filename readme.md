@@ -18,17 +18,19 @@
 
 + 支持解析藏宝阁商品号链接，例：
 
-![cbg_中国区-iOS_夏之蝉_南瓜多糖_20210222071008_screenshot](sample/cbg_中国区-iOS_夏之蝉_南瓜多糖_20210222071008_screenshot.png)
+  ![cbg_中国区-iOS_夏之蝉_南瓜多糖_20210222071008_screenshot](sample/cbg_中国区-iOS_夏之蝉_南瓜多糖_20210222071008_screenshot.png)
+  
+  ![cbg_中国区-iOS_夏之蝉_南瓜多糖_20210222071008_cmd](sample/cbg_中国区-iOS_夏之蝉_南瓜多糖_20210222071008_cmd.png)
+  
+  输入商品链接：[https://yys.cbg.163.com/cgi/mweb/equip/21/202102020901616-21-3S6GQUUH2DOUM](https://yys.cbg.163.com/cgi/mweb/equip/21/202102020901616-21-3S6GQUUH2DOUM)
+  
+  输出结果图：[cbg_中国区-iOS_夏之蝉_南瓜多糖_20210222071008_skill.png](sample/cbg_中国区-iOS_夏之蝉_南瓜多糖_20210222071008_skill.png)
 
-输入商品链接：[https://yys.cbg.163.com/cgi/mweb/equip/21/202102020901616-21-3S6GQUUH2DOUM](https://yys.cbg.163.com/cgi/mweb/equip/21/202102020901616-21-3S6GQUUH2DOUM)
++ 也支持解析本地数据文件（来自「[痒痒熊快照](https://github.com/OnmyojiX/yyx)」），例：
 
-输出结果图：[cbg_中国区-iOS_夏之蝉_南瓜多糖_20210222071008_skill.png](sample/cbg_中国区-iOS_夏之蝉_南瓜多糖_20210222071008_skill.png)
-
-+ 也支持解析本地数据文件（来自[痒痒熊快照](https://github.com/OnmyojiX/yyx)），例：
-
-输入数据文件：[yyx_南瓜多糖_15007_438879_20210228052249.json](sample/yyx_南瓜多糖_15007_438879_20210228052249.json)
-
-输出结果图：[yyx_南瓜多糖_15007_438879_20210228052249_skill.png](sample/yyx_南瓜多糖_15007_438879_20210228052249_skill.png)
+  输入数据文件：[yyx_南瓜多糖_15007_438879_20210228052249.json](sample/yyx_南瓜多糖_15007_438879_20210228052249.json)
+  
+  输出结果图：[yyx_南瓜多糖_15007_438879_20210228052249_skill.png](sample/yyx_南瓜多糖_15007_438879_20210228052249_skill.png)
 
 > 「技能图鉴」同时发布到 NGA 论坛阴阳师板块，可回复交流：
 > 
@@ -45,7 +47,7 @@ pip install pillow
 ### 文档
 
 ```
-python cbg_skill.py -h
+python3 cbg_skill.py -h
 ```
 
 ```
@@ -69,7 +71,7 @@ python cbg_skill.py -h
 
 v2.0.210301
 + 除藏宝阁链接，也支持解析本地藏宝阁JSON数据文件
-+ 支持解析[痒痒熊快照](https://github.com/OnmyojiX/yyx)导出的JSON数据文件
++ 支持解析「[痒痒熊快照](https://github.com/OnmyojiX/yyx)」导出的JSON数据文件
 + 增加式神图鉴信息
 + 更精准识别SR、R阶联动拥有情况
 + 除暗色输出，增加亮色输出可选，并支持命令行指定（“-d/--dark”、“-l/--light”）
