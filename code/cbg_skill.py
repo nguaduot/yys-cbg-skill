@@ -446,7 +446,7 @@ def main():
     print(COPYRIGHT)
     print(log('暗色输出' if PALETTE_DARK else '亮色输出', 'info'))
     if not url_or_path:
-        url_or_path = input(log('藏宝阁链接/痒痒熊快照导出文件: ', 'input')).strip('"\'')
+        url_or_path = input(log('链接/路径: ', 'input')).strip('"\'')
 
     # 读取/抓取数据&解析数据
     thread1 = Thread(target=fetch_cbg_config)
