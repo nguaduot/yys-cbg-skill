@@ -16,15 +16,15 @@
 
 ### 例
 
-+ 支持解析藏宝阁链接，例：
++ 支持解析藏宝阁商品号链接，例：
 
-![cbg_中国区-iOS_夏之蝉_南瓜多糖_20210201095612_screenshot](sample/cbg_中国区-iOS_夏之蝉_南瓜多糖_20210201095612_screenshot.png)
+![cbg_中国区-iOS_夏之蝉_南瓜多糖_20210222071008_screenshot](sample/cbg_中国区-iOS_夏之蝉_南瓜多糖_20210222071008_screenshot.png)
 
-输入商品链接：[阴阳师藏宝阁-夏之蝉-南瓜多糖](https://yys.cbg.163.com/cgi/mweb/equip/21/202102020901616-21-3S6GQUUH2DOUM)
+输入商品链接：[https://yys.cbg.163.com/cgi/mweb/equip/21/202102020901616-21-3S6GQUUH2DOUM](https://yys.cbg.163.com/cgi/mweb/equip/21/202102020901616-21-3S6GQUUH2DOUM)
 
 输出结果图：[cbg_中国区-iOS_夏之蝉_南瓜多糖_20210222071008_skill.png](sample/cbg_中国区-iOS_夏之蝉_南瓜多糖_20210222071008_skill.png)
 
-+ 也支持解析[痒痒熊快照](https://github.com/OnmyojiX/yyx)导出的数据文件，例：
++ 也支持解析本地数据文件（来自[痒痒熊快照](https://github.com/OnmyojiX/yyx)），例：
 
 输入数据文件：[yyx_南瓜多糖_15007_438879_20210228052249.json](sample/yyx_南瓜多糖_15007_438879_20210228052249.json)
 
@@ -49,12 +49,12 @@ python cbg_skill.py -h
 ```
 
 ```
-+ 选项：
-  -h, --help     帮助
-  -v, --version  程序版本
-  -u, --url      藏宝阁商品链接
-+ 若未指定 -u, 程序会读取未知参数, 若也无未知参数, 不启动程序'
-+ 不带任何参数也可启动程序, 会有参数输入引导
+参数文档:
+-u, --url        藏宝阁商品号链接/本地数据文件路径
+-d, --dark       暗色输出(默认)
+-l, --light      亮色输出
+-v, --version    程序版本
+-h, --help       帮助
 ```
 
 ### 作者
@@ -67,12 +67,12 @@ python cbg_skill.py -h
 
 ### 更新日志
 
-v2.0.210228
+v2.0.210301
 + 除藏宝阁链接，也支持解析本地藏宝阁JSON数据文件
 + 支持解析[痒痒熊快照](https://github.com/OnmyojiX/yyx)导出的JSON数据文件
 + 增加式神图鉴信息
 + 更精准识别SR、R阶联动拥有情况
-+ 除暗色输出，增加亮色输出可选
++ 除暗色输出，增加亮色输出可选，并支持命令行指定（“-d/--dark”、“-l/--light”）
 
 v1.1.210226
 + 缺失式神增加碎片收集量显示

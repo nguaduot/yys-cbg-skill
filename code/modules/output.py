@@ -23,16 +23,24 @@ class Palette(object):
     tag = ('#000000', '#000000', '#000000')  # 标签色(好, 中, 差)
 
 
-class PaletteDay(Palette):
-    bg = '#ffffff'
-    txt = ('#000000', '#555555')
-    tag = ('#0000ee', '#555555', '#cd0000')
-
-
-class PaletteNight(Palette):
+class PaletteDark(Palette):
+    # 参考自 PyCharm - Scheme: Darcula
+    # Background,
+    # Standard output, An expired log entry,
+    # Log verbose, Standard output, Log error
     bg = '#2b2b2b'
     txt = ('#bbbbbb', '#555555')
     tag = ('#5394ec', '#555555', '#cc666e')
+
+
+class PaletteLight(Palette):
+    # 参考自 PyCharm - Scheme: Classic Light
+    # Background,
+    # Standard output, An expired log entry,
+    # Log verbose, ANSI: gray, Log error
+    bg = '#ffffff'
+    txt = ('#000000', '#555555')
+    tag = ('#0000ee', '#aaaaaa', '#cd0000')
 
 
 class Output(object):
@@ -275,8 +283,8 @@ def enabled():
 
 
 def text2img(file_out, data, title: str = None, feet: tuple = None,
-             palette: Palette = None):
-    o = Output(palette if palette else PaletteNight())
+             palette_dark: bool = True):
+    o = Output(PaletteDark() if palette_dark else PaletteLight())
     o.text2img(util.font(), file_out, _data2text(data),
                title, feet if feet else ())
 

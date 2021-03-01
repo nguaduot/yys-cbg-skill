@@ -6,8 +6,8 @@
 # 了解更多请前往 GitHub 查看项目：https://github.com/nguaduot/yys-cbg-skill
 #
 # author: @nguaduot 痒痒鼠@南瓜多糖
-# version: 2.0.210228
-# date: 20210228
+# version: 2.0
+# date: 20210301
 
 import getopt
 import json
@@ -27,28 +27,30 @@ from modules import parser
 PROG = 'yys-cbg-skill'
 AUTH = 'nguaduot'
 VER = '2.0'
-VERSION = VER + '.210228'
+VERSION = VER + '.210301'
 REL = 'github.com/nguaduot/yys-cbg-skill'
 COPYRIGHT = '%s v%s @%s %s' % (PROG, VERSION, AUTH, REL)
-HELP = '''+ 选项：
-  -h, --help     帮助
-  -v, --version  程序版本
-  -u, --url      藏宝阁商品链接
-+ 若未指定 -u, 程序会读取未知参数, 若也无未知参数, 不启动程序'
-+ 不带任何参数也可启动程序, 会有参数输入引导'''
+HELP = '''参数文档:
+-u, --url        藏宝阁商品号链接/本地数据文件路径
+-d, --dark       暗色输出(默认)
+-l, --light      亮色输出
+-v, --version    程序版本
+-h, --help       帮助'''
 
-HERO_N_FAKE = {
+# TODO: 可自行调整
+RARITY_VISIBLE = (
+    'x', 'sp', 'ssr', 'sr', 'r'
+)  # 可见稀有度, 合法值: sp, ssr, sr, r, n, x (n: N+呱, x: 联动)
+PALETTE_DARK = True  # 暗色输出(True: 暗色, False: 亮色)
+
+# TODO: 以下常量需留意随版本更新而检查更新
+HERO_DAMO = {
     410: '招福达摩',
     411: '御行达摩',
     412: '奉为达摩',
     413: '大吉达摩',
     499: '鬼武达摩'
-}  # 被归为 N 阶稀有度的素材
-
-# TODO: 可自行调整
-RARITY_VISIBLE = ['x', 'sp', 'ssr', 'sr', 'r']  # 设定显示的稀有度, 其他则不显示(X为联动)
-
-# TODO: 以下常量需留意随版本更新而检查更新
+}  # 素材
 HERO_SKILL_MAX = {
     # 联动
     '奴良陆生': '515',
@@ -235,7 +237,7 @@ HERO_SKILL_MAX = {
     '辉夜姬呱': '55',
     '荒呱': '55',
     '彼岸花呱': '55'
-}  # 式神技能等级上限, 使用 HERO_SKILL_MAX.get(x, x) 取值而非 HERO_SKILL_MAX[x]
+}  # 式神技能等级上限, 使用 ?.get(?, ?) 取值而非 ?[?]
 
 USER_AGENT = ('Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
               ' AppleWebKit/537.36 (KHTML, like Gecko)'
@@ -253,7 +255,7 @@ def save(data_hero_book, title, feet, path_base):
         feet_all = feet + (path.basename(file_result), COPYRIGHT)
         output.text2img(file_result, data_hero_book,
                         title=title, feet=feet_all,
-                        palette=output.PaletteDay())
+                        palette_dark=PALETTE_DARK)
         print(log('已保存结果 \'*_%s\'' % file_result.rsplit('_', 1)[1], 'info'))
         view(file_result)
     else:
@@ -262,12 +264,13 @@ def save(data_hero_book, title, feet, path_base):
 
 
 def get_hero_book(data_config: dict):
+    """
+    e.g. [200, '桃花妖', 3, 'taohuayao']
+    式神 ID, 式神名, 稀有度索引, 式神名拼音
+    """
     result = {}
     for item in data_config['hero_list']:
-        # [200, '桃花妖', 3, 'taohuayao']
-        # 200: 式神 ID
-        # 3: 稀有度索引(5 SP 4 SSR 3 SR 2 R 1 N + 呱 + 素材)
-        if item[0] in HERO_N_FAKE:
+        if item[0] in HERO_DAMO:  # 剔除被算作N阶稀有度的"素材"
             continue
         result[item[1]] = {
             'rarity': item[2],
@@ -330,6 +333,7 @@ def fetch_cbg_equip(url_equip):
 
 def read_data(path_data):
     global data_parser
+    print(log('正在读取式神录数据...', 'info'))
     with open(path_data, 'r', encoding='utf-8') as f:
         obj = json.loads(f.read())
         if check_data_fluxxu(obj):  # 按「痒痒熊快照」数据处理
@@ -392,31 +396,33 @@ def view(file):
 
 
 def parse_args(args):
+    global PALETTE_DARK
     try:
         opts, args = getopt.getopt(
             args,
-            'hvu:',
-            ['help', 'version', 'url=']
+            'hvdlu:',
+            ['help', 'version', 'dark', 'light', 'url=']
         )
     except getopt.GetoptError:
         opts, args = [('-h', '')], []
-    url_equip, helped = None, False
+    url_or_path, do_not_run = None, False
     for opt, value in opts:
         if opt in ('-h', '--help'):
             print(COPYRIGHT)
             print(HELP)
-            helped = True
+            do_not_run = True
         elif opt in ('-v', '--version'):
             print(VERSION)
-            helped = True
+            do_not_run = True
+        elif opt in ('-d', '--dark'):
+            PALETTE_DARK = True
+        elif opt in ('-l', '--light'):
+            PALETTE_DARK = False
         elif opt in ('-u', '--url'):
-            url_equip = value
-    if not url_equip and args:
-        url_equip = args[0]
-    if not helped and not url_equip:
-        print(COPYRIGHT)
-        print(HELP)
-    return url_equip
+            url_or_path = value
+    if not url_or_path and args:
+        url_or_path = args[0]
+    return url_or_path, do_not_run
 
 
 def run_as_exe():
@@ -432,13 +438,14 @@ def run_as_exe():
 
 
 def main():
-    if len(sys.argv) > 1:
-        url_or_path = parse_args(sys.argv[1:])
-        if not url_or_path:
-            return
-        print(COPYRIGHT)
-    else:
-        print(COPYRIGHT)
+    url_or_path, do_not_run = None, False
+    if len(sys.argv) > 1:  # 带参启动
+        url_or_path, do_not_run = parse_args(sys.argv[1:])
+    if do_not_run:  # 无须启动
+        return
+    print(COPYRIGHT)
+    print(log('暗色输出' if PALETTE_DARK else '亮色输出', 'info'))
+    if not url_or_path:
         url_or_path = input(log('藏宝阁链接/痒痒熊快照导出文件: ', 'input')).strip('"\'')
 
     # 读取/抓取数据&解析数据

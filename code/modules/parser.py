@@ -14,10 +14,14 @@ from os import path
 
 
 class Parser(object):
-    hero_rarity = {5: 'sp', 4: 'ssr', 3: 'sr', 2: 'r', 1: 'n'}  # 式神稀有度索引
+    hero_rarity = {
+        5: 'sp', 4: 'ssr', 3: 'sr', 2: 'r', 1: 'n'
+    }  # 式神稀有度索引(n: N+呱)
     file_attach = None  # 所依附文件, 据此决定结果文件路径
     data_src = None
-    rarity_visible = ['x', 'sp', 'ssr', 'sr', 'r']  # 设定显示的稀有度, 其他则不显示(X为联动)
+    rarity_visible = [
+        'x', 'sp', 'ssr', 'sr', 'r'
+    ]  # 可见稀有度, 合法值: sp, ssr, sr, r, n, x (n: N+呱, x: 联动)
 
     def __init__(self, file_attach, data_src, rarity_visible=None):
         self.file_attach = file_attach
@@ -42,7 +46,7 @@ class CbgParser(Parser):
     hero_onmyoji = {
         10: '晴明', 11: '神乐', 13: '源博雅', 12: '八百比丘尼',
         900: '神龙', 901: '白藏主', 903: '黑豹', 902: '孔雀'
-    }  # 阴阳师及其御灵稀有度均被设定为SSR, 即 item['rarity'] == 4
+    }  # 阴阳师及其御灵稀有度均被设定为SSR, 即 ?['rarity'] == 4
     rarity_fragment = {5: 60, 4: 50, 3: 40, 2: 30, 1: 25}  # 各稀有度碎片合成量
     data_equip = None
 
@@ -178,7 +182,6 @@ class CbgParser(Parser):
 
 
 class YyxParser(Parser):
-    # map_rarity = {'SP': 5, 'SSR': 4, 'SR': 3, 'R': 2, 'N': 1}  # 稀有度索引映射
     heroes_x = (
         '奴良陆生',
         '卖药郎',
