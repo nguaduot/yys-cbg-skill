@@ -7,7 +7,7 @@
 #
 # author: @nguaduot 痒痒鼠@南瓜多糖
 # version: 2.0
-# date: 20210301
+# date: 20210303
 
 import getopt
 import json
@@ -27,217 +27,28 @@ from modules import parser
 PROG = 'yys-cbg-skill'
 AUTH = 'nguaduot'
 VER = '2.0'
-VERSION = VER + '.210301'
+VERSION = VER + '.210303'
 REL = 'github.com/nguaduot/yys-cbg-skill'
 COPYRIGHT = '%s v%s @%s %s' % (PROG, VERSION, AUTH, REL)
 HELP = '''参数文档:
 -u, --url        藏宝阁商品号链接/本地数据文件路径
--d, --dark       暗色输出(默认)
--l, --light      亮色输出
+-r, --rarity     可见稀有度(6:联动 5:SP 4:SSR 3:SR 2:R 1:N 0:呱, 默认"65432")
+-l, --light      亮色输出(默认暗色)
 -v, --version    程序版本
 -h, --help       帮助'''
 
-# TODO: 可自行调整
-RARITY_VISIBLE = (
-    'x', 'sp', 'ssr', 'sr', 'r'
-)  # 可见稀有度, 合法值: sp, ssr, sr, r, n, x (n: N+呱, x: 联动)
+# TODO: 可按需调整
+HERO_RARITY2 = {
+    6: {'name': '联动', 'visible': True},
+    5: {'name': 'SP', 'visible': True},
+    4: {'name': 'SSR', 'visible': True},
+    3: {'name': 'SR', 'visible': True},
+    2: {'name': 'R', 'visible': True},
+    1: {'name': 'N', 'visible': False},
+    0: {'name': '呱', 'visible': False},
+    -1: {'name': '素材', 'visible': False}
+}  # 式神稀有度索引, 名称, 输出可见性 (官方仅 5 4 3 2 1, 6 0 -1 为自定)
 PALETTE_DARK = True  # 暗色输出(True: 暗色, False: 亮色)
-
-# TODO: 以下常量需留意随版本更新而检查更新
-HERO_DAMO = {
-    410: '招福达摩',
-    411: '御行达摩',
-    412: '奉为达摩',
-    413: '大吉达摩',
-    499: '鬼武达摩'
-}  # 素材
-HERO_SKILL_MAX = {
-    # 联动
-    '奴良陆生': '515',
-    '卖药郎': '515',
-    '鬼灯': '515',
-    '阿香': '515',
-    '蜜桃&芥子': '515',
-    '犬夜叉': '515',
-    '杀生丸': '515',
-    '桔梗': '515',
-    '朽木露琪亚': '555',
-    '黑崎一护': '515',
-    '灶门炭治郎': '555',
-    '灶门祢豆子': '555',
-    # SP
-    '少羽大天狗': '515',
-    '炼狱茨木童子': '555',
-    '稻荷神御馔津': '555',
-    '苍风一目连': '555',
-    '赤影妖刀姬': '555',
-    '御怨般若': '555',
-    '骁浪荒川之主': '555',
-    '烬天玉藻前': '555',
-    '鬼王酒吞童子': '555',
-    '天剑韧心鬼切': '555',
-    '聆海金鱼姬': '515',
-    '浮世青行灯': '555',
-    '缚骨清姬': '555',
-    '待宵姑获鸟': '515',
-    '麓铭大岳丸': '555',
-    '初翎山风': '555',
-    '夜溟彼岸花': '555',
-    # SSR
-    '大天狗': '555',
-    '酒吞童子': '515',
-    '荒川之主': '515',
-    '阎魔': '555',
-    '两面佛': '555',
-    '小鹿男': '555',
-    '茨木童子': '515',
-    '青行灯': '555',
-    '妖刀姬': '515',
-    '一目连': '555',
-    '花鸟卷': '555',
-    '辉夜姬': '535',
-    '荒': '555',
-    '彼岸花': '555',
-    '雪童子': '515',
-    '山风': '555',
-    '玉藻前': '555',
-    '御馔津': '515',
-    '面灵气': '555',
-    '鬼切': '515',
-    '白藏主': '555',
-    '八岐大蛇': '555',
-    '不知火': '555',
-    '大岳丸': '555',
-    '泷夜叉姬': '555',
-    '云外镜': '515',
-    '鬼童丸': '555',
-    '缘结神': '515',
-    '铃鹿御前': '555',
-    '紧那罗': '555',
-    '千姬': '555',
-    # SR
-    '桃花妖': '555',
-    '雪女': '555',
-    '鬼使白': '555',
-    '鬼使黑': '515',
-    '孟婆': '555',
-    '犬神': '555',
-    '骨女': '515',
-    '鬼女红叶': '555',
-    '跳跳哥哥': '555',
-    '傀儡师': '515',
-    '海坊主': '515',
-    '判官': '555',
-    '凤凰火': '515',
-    '吸血姬': '515',
-    '妖狐': '555',
-    '妖琴师': '555',
-    '食梦貘': '515',
-    '清姬': '615',
-    '镰鼬': '555',
-    '姑获鸟': '515',
-    '二口女': '515',
-    '白狼': '515',
-    '樱花妖': '555',
-    '惠比寿': '534',
-    '络新妇': '515',
-    '般若': '515',
-    '青坊主': '515',
-    '万年竹': '515',
-    '夜叉': '555',
-    '黑童子': '555',
-    '白童子': '515',
-    '烟烟罗': '555',
-    '金鱼姬': '515',
-    '鸩': '555',
-    '以津真天': '555',
-    '匣中少女': '515',
-    '小松丸': '555',
-    '书翁': '555',
-    '百目鬼': '555',
-    '追月神': '545',
-    '日和坊': '515',
-    '薰': '555',
-    '弈': '515',
-    '猫掌柜': '515',
-    '人面树': '555',
-    '於菊虫': '555',
-    '一反木绵': '555',
-    '入殓师': '555',
-    '化鲸': '555',
-    '海忍': '555',
-    '久次良': '515',
-    '蟹姬': '555',
-    '纸舞': '555',
-    '星熊童子': '555',
-    '风狸': '555',
-    '蝎女': '555',
-    # R
-    '三尾狐': '656',
-    '座敷童子': '533',
-    '鲤鱼精': '555',
-    '九命猫': '515',
-    '狸猫': '555',
-    '河童': '545',
-    '童男': '551',
-    '童女': '554',
-    '饿鬼': '555',
-    '巫蛊师': '555',
-    '鸦天狗': '545',
-    '食发鬼': '515',
-    '武士之灵': '555',
-    '雨女': '514',
-    '跳跳弟弟': '555',
-    '跳跳妹妹': '515',
-    '兵俑': '555',
-    '丑时之女': '555',
-    '独眼小僧': '555',
-    '铁鼠': '515',
-    '椒图': '543',
-    '管狐': '545',
-    '山兔': '545',
-    '萤草': '555',
-    '蝴蝶精': '555',
-    '山童': '515',
-    '首无': '515',
-    '觉': '515',
-    '青蛙瓷器': '515',
-    '古笼火': '535',
-    '兔丸': '555',
-    '数珠': '555',
-    '小袖之手': '555',
-    '虫师': '515',
-    '天井下': '555',
-    '垢尝': '515',
-    # N卡
-    '灯笼鬼': '534',
-    '提灯小僧': '55',
-    '赤舌': '555',
-    '盗墓小鬼': '5',
-    '寄生魂': '5',
-    '唐纸伞妖': '55',
-    '天邪鬼绿': '55',
-    '天邪鬼赤': '51',
-    '天邪鬼黄': '51',
-    '天邪鬼青': '51',
-    '帚神': '55',
-    '涂壁': '51',
-    # 呱
-    '大天狗呱': '55',
-    '酒吞呱': '55',
-    '荒川呱': '55',
-    '阎魔呱': '55',
-    '两面佛呱': '55',
-    '小鹿男呱': '55',
-    '茨木呱': '55',
-    '青行灯呱': '55',
-    '妖刀姬呱': '55',
-    '一目连呱': '55',
-    '花鸟卷呱': '55',
-    '辉夜姬呱': '55',
-    '荒呱': '55',
-    '彼岸花呱': '55'
-}  # 式神技能等级上限, 使用 ?.get(?, ?) 取值而非 ?[?]
 
 USER_AGENT = ('Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
               ' AppleWebKit/537.36 (KHTML, like Gecko)'
@@ -247,7 +58,7 @@ data_src_config: dict = None
 data_parser: parser.Parser = None
 
 
-def save(data_hero_book, title, feet, path_base):
+def save(data_hero_book: dict, title: str, feet: tuple, path_base: str):
     for foot in feet:
         print(foot)
     file_result = '%s_skill.png' % path_base
@@ -266,19 +77,21 @@ def save(data_hero_book, title, feet, path_base):
 def get_hero_book(data_config: dict):
     """
     e.g. [200, '桃花妖', 3, 'taohuayao']
-    式神 ID, 式神名, 稀有度索引, 式神名拼音
+    依次为: 式神ID, 式神名, 稀有度索引, 式神名拼音
+    注意: 稀有度索引中, "呱"和"素材"均被归到"N"，即1
     """
     result = {}
     for item in data_config['hero_list']:
-        if item[0] in HERO_DAMO:  # 剔除被算作N阶稀有度的"素材"
-            continue
         result[item[1]] = {
-            'rarity': item[2],
-            'fragment': None,
-            'sort': item[0],
-            'x': False,
-            'max': HERO_SKILL_MAX.get(item[1], None),
-            'all': []
+            'id': item[0],  # ID
+            'rarity': item[2],  # 稀有度
+            'rarity2': item[2],  # 稀有度v2
+            'fragment': None,  # 碎片存量, 未知置None
+            'skill': {
+                'max': None,  # 满技能等级, 未知置None
+                'all': None  # 已有技能等级, 缺失置[], 未知置None
+            },  # 技能
+            'colored': None,  # True: 图鉴已点亮, False: 未点亮, None: 未知
         }
     return result
 
@@ -304,7 +117,7 @@ def fetch_cbg_equip(url_equip):
     # queries = urllib.parse.parse_qs(parsed.query)  # 参数可省略
     m = re.match(r'/cgi/mweb/equip/(\d+)/(.+)', parsed.path)
     if not m:
-        print(log('非法藏宝阁商品详情链接', 'warn'))
+        print(log('非法藏宝阁商品号链接', 'warn'))
         return
     print(log('正在读取式神录数据...', 'info'))
     url = 'https://yys.cbg.163.com/cgi/api/get_equip_detail'
@@ -323,7 +136,7 @@ def fetch_cbg_equip(url_equip):
     )
     result = request.urlopen(req, timeout=8).read().decode('utf-8')
     data_src = json.loads(result)
-    data_parser = parser.CbgParser(sys.argv[0], data_src, RARITY_VISIBLE)
+    data_parser = parser.CbgParser(sys.argv[0], data_src, HERO_RARITY2)
     # 保存源文件
     file_src = '%s.json' % data_parser.generate_path_base()
     with open(file_src, 'w', encoding='utf-8') as f:
@@ -334,14 +147,19 @@ def fetch_cbg_equip(url_equip):
 def read_data(path_data):
     global data_parser
     print(log('正在读取式神录数据...', 'info'))
-    with open(path_data, 'r', encoding='utf-8') as f:
-        obj = json.loads(f.read())
-        if check_data_fluxxu(obj):  # 按「痒痒熊快照」数据处理
-            data_parser = parser.YyxParser(path_data, obj, RARITY_VISIBLE)
-        elif check_data_cbg(obj):  # 按藏宝阁数据处理
-            data_parser = parser.CbgParser(sys.argv[0], obj, RARITY_VISIBLE)
-        else:
-            print(log('无法识别数据文件内容', 'error'))
+    try:
+        with open(path_data, 'r', encoding='utf-8') as f:
+            obj = json.loads(f.read())
+            if check_data_fluxxu(obj):  # 按「痒痒熊快照」数据处理
+                data_parser = parser.YyxParser(path_data, obj, HERO_RARITY2)
+            elif check_data_cbg(obj):  # 按藏宝阁数据处理
+                data_parser = parser.CbgParser(sys.argv[0], obj, HERO_RARITY2)
+            else:
+                print(log('无法识别数据文件内容', 'error'))
+    except (FileNotFoundError, UnicodeDecodeError,
+            json.decoder.JSONDecodeError) as e:
+        print(log('非法数据文件或不存在', 'error'))
+        print(e)
 
 
 def check_data_fluxxu(data):
@@ -395,13 +213,25 @@ def view(file):
         subprocess.run(['explorer', file])
 
 
+def set_palette(light: bool):
+    global PALETTE_DARK
+    if light:
+        PALETTE_DARK = False
+
+
+def set_rarity2(code_input: str):
+    global HERO_RARITY2
+    for index, item in HERO_RARITY2.items():
+        item['visible'] = str(index) in code_input
+
+
 def parse_args(args):
     global PALETTE_DARK
     try:
         opts, args = getopt.getopt(
             args,
-            'hvdlu:',
-            ['help', 'version', 'dark', 'light', 'url=']
+            'hvlr:u:',
+            ['help', 'version', 'light', 'rarity=', 'url=']
         )
     except getopt.GetoptError:
         opts, args = [('-h', '')], []
@@ -414,10 +244,10 @@ def parse_args(args):
         elif opt in ('-v', '--version'):
             print(VERSION)
             do_not_run = True
-        elif opt in ('-d', '--dark'):
-            PALETTE_DARK = True
         elif opt in ('-l', '--light'):
-            PALETTE_DARK = False
+            set_palette(True)
+        elif opt in ('-r', '--rarity'):
+            set_rarity2(value)
         elif opt in ('-u', '--url'):
             url_or_path = value
     if not url_or_path and args:
@@ -444,6 +274,14 @@ def main():
     if do_not_run:  # 无须启动
         return
     print(COPYRIGHT)
+    print(log('可见稀有度: %s, 不可见: %s' % (
+        ' '.join([
+            v['name'] for v in HERO_RARITY2.values() if v['visible']
+        ]),
+        ' '.join([
+            v['name'] for v in HERO_RARITY2.values() if not v['visible']
+        ])
+    ), 'info'))
     print(log('暗色输出' if PALETTE_DARK else '亮色输出', 'info'))
     if not url_or_path:
         url_or_path = input(log('链接/路径: ', 'input')).strip('"\'')

@@ -214,51 +214,45 @@ def _skill_basic(skill: str):
 
 
 def _data2text(data):
-    data_x = [{**{'name': name}, **item}
-              for name, item in data.items() if item['x']]
-    data_not_x = [{**{'name': name}, **item}
-                  for name, item in data.items() if not item['x']]
-
-    data_columns = [sorted(
-        data_x,
-        key=lambda x: x['sort']
-    )] if data_x else []
-    rarities = sorted(list({item['rarity'] for item in data_not_x}),
+    data_arr = [{**{'name': name}, **item} for name, item in data.items()]
+    rarities = sorted(list({item['rarity2'] for item in data_arr}),
                       reverse=True)
+    data_columns = []
     for rarity in rarities:
         data_columns.append(sorted(
-            [item for item in data_not_x if item['rarity'] == rarity],
-            key=lambda x: x['sort']
+            [item for item in data_arr if item['rarity2'] == rarity],
+            key=lambda x: x['id']
         ))
 
     result = []
     for column in data_columns:
         result_columns = []
         for i, item in enumerate(column):
-            if item['all'] is None:  # 式神缺失
-                name = item['name']
-                if item['fragment'] and item['fragment']['own'] is not None:
-                    name += ':%d片' % item['fragment']['own']
-                result_columns.append(['%s  %s%s' % (
-                    name, '-',
-                    ('/%s' % item['max']) if item['max'] else ''
-                )])
-                continue
-            if not item['all']:  # [] 未知
+            skill = item['skill']
+            if skill['all'] is None:  # None 未知
                 result_columns.append(['%s  %s%s' % (
                     item['name'], '?',
-                    ('/%s' % item['max']) if item['max'] else ''
+                    ('/%s' % skill['max']) if skill['max'] else ''
+                )])
+                continue
+            if not skill['all']:  # [] 式神缺失
+                name = item['name']
+                if item['fragment'] is not None:
+                    name += ':%d片' % item['fragment']
+                result_columns.append(['%s  %s%s' % (
+                    name, '-',
+                    ('/%s' % skill['max']) if skill['max'] else ''
                 )])
                 continue
             skill_all = []
-            for skill in item['all']:
-                skill_all.append(_fix_skill(skill, item['max']))
+            for v in skill['all']:
+                skill_all.append(_fix_skill(v, skill['max']))
             skill_all = sorted(skill_all,
                                key=lambda x: _score_skill(x),
                                reverse=True)
             index_basic_skill = len(skill_all)
-            for j, skill in enumerate(skill_all):
-                if _skill_basic(skill):
+            for j, v in enumerate(skill_all):
+                if _skill_basic(v):
                     index_basic_skill = j
                     break
             lines = ['%s  %s' % (item['name'], skill)
@@ -268,7 +262,7 @@ def _data2text(data):
                 if index_basic_skill < len(skill_all) - 1:
                     line = '%dx' % (len(skill_all) - index_basic_skill) + line
                 lines.append(line)
-            lines[0] += ('/%s' % item['max']) if item['max'] else ''
+            lines[0] += ('/%s' % skill['max']) if skill['max'] else ''
             result_columns.append(lines)
         result.append(result_columns)
     return result
