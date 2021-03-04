@@ -7,7 +7,7 @@
 #
 # author: @nguaduot 痒痒鼠@南瓜多糖
 # version: 2.0
-# date: 20210303
+# date: 20210304
 
 import getopt
 import json
@@ -27,7 +27,7 @@ from modules import parser
 PROG = 'yys-cbg-skill'
 AUTH = 'nguaduot'
 VER = '2.0'
-VERSION = VER + '.210303'
+VERSION = VER + '.210304'
 REL = 'github.com/nguaduot/yys-cbg-skill'
 COPYRIGHT = '%s v%s @%s %s' % (PROG, VERSION, AUTH, REL)
 HELP = '''参数文档:
@@ -221,8 +221,12 @@ def set_palette(light: bool):
 
 def set_rarity2(code_input: str):
     global HERO_RARITY2
+    valid = False
     for index, item in HERO_RARITY2.items():
-        item['visible'] = str(index) in code_input
+        visible = str(index) in code_input
+        item['visible'] = visible
+        valid |= visible
+    return valid
 
 
 def parse_args(args):
@@ -247,7 +251,9 @@ def parse_args(args):
         elif opt in ('-l', '--light'):
             set_palette(True)
         elif opt in ('-r', '--rarity'):
-            set_rarity2(value)
+            if not set_rarity2(value):
+                print(log('稀有度指定无效', 'error'))
+                do_not_run = True
         elif opt in ('-u', '--url'):
             url_or_path = value
     if not url_or_path and args:
