@@ -440,7 +440,8 @@ class YyxParser(Parser):
         data_sp_ssr = [item for item in data_hero
                        if item['rarity'] in ('SP', 'SSR')]
         id_damo_yx = 411
-        sum_own = len([item for item in data_hero if item['hero_id'] == id_damo_yx])
+        sum_own = len([item for item in data_hero
+                       if item['hero_id'] == id_damo_yx])
         sum_own_f = 0
         for item in data_fragment:
             if item['hero_id'] == id_damo_yx:

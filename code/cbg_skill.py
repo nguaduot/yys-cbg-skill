@@ -7,7 +7,7 @@
 #
 # author: @nguaduot 痒痒鼠@南瓜多糖
 # version: 2.0
-# date: 20210304
+# date: 20210305
 
 import getopt
 import json
@@ -27,7 +27,7 @@ from modules import parser
 PROG = 'yys-cbg-skill'
 AUTH = 'nguaduot'
 VER = '2.0'
-VERSION = VER + '.210304'
+VERSION = VER + '.210305'
 REL = 'github.com/nguaduot/yys-cbg-skill'
 COPYRIGHT = '%s v%s @%s %s' % (PROG, VERSION, AUTH, REL)
 HELP = '''参数文档:

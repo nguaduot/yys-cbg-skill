@@ -1,8 +1,8 @@
 # 藏宝阁·阴阳师·技能图鉴
 
-[![Beta](https://img.shields.io/badge/Beta-2.0-brightgreen.svg?style=flat-square)](https://github.com/nguaduot/yys-cbg-skill)
-[![Release](https://img.shields.io/badge/Release-1.1-brightgreen.svg?style=flat-square)](https://github.com/nguaduot/yys-cbg-skill/releases)
-[![Download](https://img.shields.io/badge/Download-EXE-brightgreen.svg?style=flat-square)](dist/%E6%8A%80%E8%83%BD%E5%9B%BE%E9%89%B41.1.exe)
+[![Beta](https://img.shields.io/badge/Beta-2.1-brightgreen.svg?style=flat-square)](https://github.com/nguaduot/yys-cbg-skill)
+[![Release](https://img.shields.io/badge/Release-2.0-brightgreen.svg?style=flat-square)](https://github.com/nguaduot/yys-cbg-skill/releases)
+[![Download](https://img.shields.io/badge/Download-EXE-brightgreen.svg?style=flat-square)](dist/%E6%8A%80%E8%83%BD%E5%9B%BE%E9%89%B42.0.exe)
 
 [阴阳师藏宝阁](https://yys.cbg.163.com/)衍生小工具，一图速览商品号式神图鉴&技能：
 
@@ -69,7 +69,7 @@ python3 cbg_skill.py -h
 
 ### 更新日志
 
-v2.0.210303
+v2.0.210305
 + 除藏宝阁链接，也支持解析本地藏宝阁JSON数据文件
 + 支持解析「[痒痒熊快照](https://github.com/OnmyojiX/yyx)」导出的JSON数据文件
 + 支持通过命令行指定可见稀有度（“-r/--rarity”，有效“6543210”，默认“65432”，自行尝试）
